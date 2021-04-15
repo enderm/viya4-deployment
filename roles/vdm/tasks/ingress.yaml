@@ -3,14 +3,40 @@
 # Each can have either customer provided certs or cert-manager generated certs
 # Regardless of type or source of certificates, additional root CA certs can be provided
 # See sas-bases/examples/security/README.md for full details
+
+
+- name: map ingress type to overlay
+  set_fact:
+    ingress_overlay_path:  {
+               'ingress': 'overlays/network/ingress',
+               'istio': 'overlays/network/istio',
+               'ocp-route': 'overlays/network/route.openshift.io/v1/route'
+               }
+  tags:
+    - install
+    - uninstall
+    - upgrade
+
+- name: map ingress type to security overlay
+  set_fact:
+    ingress_security_path:  {
+               'ingress': 'overlays/network/ingress/security',
+               'istio': 'overlays/network/istio/security',
+               'ocp-route': 'overlays/network/ingress/security'
+               }
+  tags:
+    - install
+    - uninstall
+    - upgrade
+
 - name: ingress - base
   overlay_facts:
     cadence_name: "{{ V4_CFG_CADENCE_NAME }}"
     cadence_number: "{{ V4_CFG_CADENCE_VERSION }}"
     existing: "{{ vdm_overlays }}"
     add:
-      - { resources: "overlays/network/{{ V4_CFG_INGRESS_TYPE }}" }
-      - { resources: "overlays/network/{{ V4_CFG_INGRESS_TYPE }}/security" }
+      - { resources: "{{ ingress_overlay_path[V4_CFG_INGRESS_TYPE] }}" }
+      - { resources: "{{ ingress_security_path[V4_CFG_INGRESS_TYPE] }}" }
   tags:
     - install
     - uninstall
@@ -128,6 +154,22 @@
     - uninstall
     - upgrade
 
+- name: ingress - Full-stack TLS - openshift
+  overlay_facts:
+    cadence_name: "{{ V4_CFG_CADENCE_NAME }}"
+    cadence_number: "{{ V4_CFG_CADENCE_VERSION }}"
+    existing: "{{ vdm_overlays }}"
+    add:
+      - { transformers: "overlays/network/ingress/security/transformers/openshift-route-reencrypt-tls-transformer.yaml", priority: 51 }
+  when:
+    - V4_CFG_TLS_MODE == "full-stack"
+    - V4_CFG_INGRESS_TYPE == "ocp-route"
+  tags:
+    - install
+    - uninstall
+    - upgrade
+
+
 - name: ingress - Front-door TLS
   overlay_facts:
     cadence_name: "{{ V4_CFG_CADENCE_NAME }}"
@@ -137,6 +179,22 @@
       - { transformers: "overlays/network/ingress/security/transformers/cas-connect-tls-transformers.yaml",priority: 51 }
   when:
     - V4_CFG_TLS_MODE == "front-door"
+  tags:
+    - install
+    - uninstall
+    - upgrade
+
+
+- name: ingress - Front-door TLS - openshift
+  overlay_facts:
+    cadence_name: "{{ V4_CFG_CADENCE_NAME }}"
+    cadence_number: "{{ V4_CFG_CADENCE_VERSION }}"
+    existing: "{{ vdm_overlays }}"
+    add:
+      - { transformers: "overlays/network/ingress/security/transformers/openshift-route-edge-tls-transformer.yaml",priority: 51 }
+  when:
+    - V4_CFG_TLS_MODE == "front-door"
+    - V4_CFG_INGRESS_TYPE == "ocp-route"
   tags:
     - install
     - uninstall
