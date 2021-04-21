@@ -1,0 +1,11 @@
+---
+ingress_overlays:
+    ingress:
+        main: overlays/network/ingress
+        security: overlays/network/ingress/security
+    istio:
+        main: overlays/network/istio
+        security: overlays/network/istio/security
+    ocp-route:
+        main: overlays/network/route.openshift.io/v1/route
+        security: overlays/network/ingress/security
