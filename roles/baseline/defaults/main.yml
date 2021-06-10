@@ -31,14 +31,11 @@ INGRESS_NGINX_CONFIG:
   controller:
     service: 
       externalTrafficPolicy: Local
-<<<<<<< HEAD
       sessionAffinity: None
       loadBalancerSourceRanges: "{{ LOADBALANCER_SOURCE_RANGES |default(['0.0.0.0/0'], -1) }}"
-=======
       sessionAffinity: None 
       annotations:
         networking.gke.io/load-balancer-type: "Internal"
->>>>>>> gcp private lb
     config:
       use-forwarded-headers: "true"
     tcp: {}
